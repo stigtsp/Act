@@ -5,15 +5,20 @@ RUN yum -y install perl-DBD-Pg perl-Module-Install perl-XML-LibXML perl-XML-SAX 
 # Copy lib and Makefile.PL to separate directory to avoid rebuild of deps when . changes.
 WORKDIR /act_deps
 COPY Makefile.PL /act_deps/Makefile.PL
-COPY lib /act_deps/lib
+COPY lib/Act.pm /act_deps/lib/Act.pm
 RUN cpanm --verbose --installdeps .
 RUN rm -r /act_deps
 
+ENV ACTHOME /act/docker/pts2018
+ENV PERL5LIB /act/lib/
+
 COPY . /act
 WORKDIR /act
-RUN perl Makefile.PL && make && make install
+#RUN perl Makefile.PL && make && make install
 
-
+COPY docker/apache.conf /usr/local/apache/conf/httpd.conf
 EXPOSE 8080
-CMD /usr/local/apache/bin/httpd -X -F -C "User nobody" -C "Group nobody" -C "Listen 8080" -C "ErrorLog /dev/stderr" -C  "TransferLog /dev/stdout" -f /act/eg/conf/httpd.conf
+
+CMD /usr/local/apache/bin/httpd -X -F
+
 # Make test requires a DB connection
